@@ -1,0 +1,129 @@
+import classNames from 'classnames';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+
+// import { SettingsContext } from 'settings/SettingsProvider';
+import { ChatTarget } from 'shared/chat/types';
+import { Button } from 'style/Button';
+import { TextArea } from 'style/TextArea';
+
+import styles from './ChatInput.module.scss';
+
+interface ChatInputProps {
+  chatTarget: ChatTarget;
+  selfId?: string;
+  showChat: boolean;
+  stopTypingTimeoutMs?: number;
+  disabled?: boolean;
+  typingIndicatorSpace?: boolean;
+
+  onSendMessage: (message: string) => void;
+  onStartTyping?: () => void;
+  onStopTyping?: () => void;
+}
+
+export function ChatInput({
+  chatTarget,
+  showChat,
+  onSendMessage,
+  onStartTyping,
+  onStopTyping,
+  stopTypingTimeoutMs = 500,
+  disabled = false,
+  typingIndicatorSpace = false,
+}: ChatInputProps) {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [inputText, setInputText] = useState('');
+  // const { showPeople } = useContext(SettingsContext);
+  const [stopTypingTimeout, setStopTypingTimeout] = useState<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (showChat && textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, [showChat, chatTarget]);
+
+  useEffect(() => {
+    if (!showChat) {
+      if (stopTypingTimeout) {
+        clearTimeout(stopTypingTimeout);
+      }
+
+      if (onStopTyping) {
+        onStopTyping();
+      }
+    }
+  }, [onStopTyping, showChat, stopTypingTimeout]);
+
+  // useEffect(() => {
+  //   if (!showPeople && textAreaRef.current) {
+  //     textAreaRef.current.blur();
+  //   }
+  // }, [showPeople]);
+
+  const onSendClick = useCallback(() => {
+    onSendMessage(inputText);
+    setInputText('');
+  }, [inputText, onSendMessage]);
+
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        onSendClick();
+      }
+    },
+    [onSendClick]
+  );
+
+  const onInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInputText(event.target.value);
+
+      if (onStartTyping) {
+        if (stopTypingTimeout) {
+          clearTimeout(stopTypingTimeout);
+        }
+
+        onStartTyping();
+
+        if (onStopTyping) {
+          setStopTypingTimeout(
+            setTimeout(() => {
+              onStopTyping();
+            }, stopTypingTimeoutMs)
+          );
+        }
+      }
+    },
+    [onStartTyping, onStopTyping, stopTypingTimeout, stopTypingTimeoutMs]
+  );
+
+  return (
+    <div className={styles.recipientContainer}>
+      <div
+        className={classNames(
+          styles.inputContainer,
+          typingIndicatorSpace ? styles.indicatorSpace : ''
+        )}
+      >
+        <div className={styles.inputWrapper}>
+          <TextArea
+            ref={textAreaRef}
+            onKeyDown={onKeyDown}
+            value={inputText}
+            placeholder={'Enter message'}
+            onChange={onInputChange}
+            disabled={disabled}
+          />
+        </div>
+        <Button
+          componentSize="small"
+          componentType="primary"
+          onClick={onSendClick}
+          disabled={!inputText}
+        >
+          Send
+        </Button>
+      </div>
+    </div>
+  );

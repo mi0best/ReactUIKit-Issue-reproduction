@@ -1,0 +1,30 @@
+.App {
+  height: 100vh;
+  display: flex;
+}
+
+.sendbird-app__conversation-wrap {
+  flex: 1;
+}
+
+/* Cheap trick to hide info button */
+.sendbird-chat-header__right__info {
+  display: none;
+}
+
+/* Customer code - custom style */
+.sendbird-mention-suggest-list
+  .sendbird-mention-suggest-list__user-item
+  .sendbird-mention-suggest-list__user-item__user-id {
+  display: none;
+}
+.sendbird-conversation__footer {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.sendbird-fileviewer
+  .sendbird-fileviewer__header
+  .sendbird-fileviewer__header__left
+  .sendbird-fileviewer__header__left__filename {
+  display: none;
+}
